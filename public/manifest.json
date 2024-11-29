@@ -1,6 +1,6 @@
 {
-  "name": "Plugin Template",
-  "description": "A template for Penpot plugins",
+  "name": "Plane Shifter",
+  "description": "3D Transform your designs!",
   "code": "/plugin.js",
   "icon": "/icon.png",
   "permissions": [

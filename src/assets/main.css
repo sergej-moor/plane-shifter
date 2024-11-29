@@ -32,15 +32,15 @@ main[data-theme="dark"] {
   --background-color: #242424;
   --text-color: rgba(255, 255, 255, 0.87);
 }
-
+#app {
+  width: 100%;
+}
 main {
   color-scheme: light dark;
   background-color: var(--background-color);
   color: var(--text-color);
   padding: var(--spacing-8);
   width: 100%;
-  max-width: 264px;
-  margin: 0 auto;
 }
 
 /* Button styles */
