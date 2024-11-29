@@ -1,6 +1,7 @@
 <script lang="ts">
     import { rotation } from '../stores/rotation';
-    import { Button, Utils } from 'svelte-tweakpane-ui';
+    import { capture } from '../stores/capture';
+    import { Utils } from 'svelte-tweakpane-ui';
     import type { PluginMessageEvent } from '../types';
     import domtoimage from 'dom-to-image';
 
@@ -29,66 +30,60 @@
         }
     }
 
-    async function captureView() {
-        console.log('Starting capture process...');
-        
-        if (!billboardElement) {
-            console.error('Billboard element not found!');
-            return;
-        }
-
-        try {
-            const rect = billboardElement.getBoundingClientRect();
-            const actualWidth = Math.round(rect.width);
-            const actualHeight = Math.round(rect.height);
-
-            console.log('Converting DOM to image with dimensions:', {
-                width: actualWidth,
-                height: actualHeight
-            });
-
-            const blob = await domtoimage.toBlob(billboardElement, {
-                width: actualWidth,
-                height: actualHeight,
-                style: {
-                    transform,
-                    'transform-origin': 'center',
-                    width: `${actualWidth}px`,
-                    height: `${actualHeight}px`
-                },
-                bgcolor: null, // transparent background
-            });
+    // Register capture function
+    $: if (billboardElement) {
+        capture.registerCapture(async () => {
+            console.log('Starting capture process...');
             
-            console.log('Blob created, size:', blob.size);
+            try {
+                const rect = billboardElement.getBoundingClientRect();
+                const actualWidth = Math.round(rect.width);
+                const actualHeight = Math.round(rect.height);
 
-            // Convert blob to Uint8Array
-            const arrayBuffer = await blob.arrayBuffer();
-            const imageData = new Uint8Array(arrayBuffer);
-            console.log('Final image data size:', imageData.length);
+                console.log('Converting DOM to image with dimensions:', {
+                    width: actualWidth,
+                    height: actualHeight
+                });
 
-       
+                const blob = await domtoimage.toBlob(billboardElement, {
+                    width: actualWidth,
+                    height: actualHeight,
+                    style: {
+                        transform,
+                        'transform-origin': 'center',
+                        width: `${actualWidth}px`,
+                        height: `${actualHeight}px`
+                    },
+                    bgcolor: null,
+                });
+                
+                console.log('Blob created, size:', blob.size);
 
-            //console.log('Sending message to plugin:', message);
-            
-            // Send to plugin
-            window.parent.postMessage({
-                type: 'add-capture',
-                imageData,
-                width: $rotation.width,
-                height: $rotation.height
-            }, '*');
+                const arrayBuffer = await blob.arrayBuffer();
+                const imageData = new Uint8Array(arrayBuffer);
+                console.log('Final image data size:', imageData.length);
+                
+                window.parent.postMessage({
+                   
+                        type: 'add-capture',
+                        imageData,
+                        width: $rotation.width,
+                        height: $rotation.height
+                    
+                }  satisfies PluginMessageEvent, '*');
 
-            console.log('Capture sent to plugin');
-        } catch (error) {
-            console.error('Error in capture process:', error);
-            if (error instanceof Error) {
-                console.error('Error name:', error.name);
-                console.error('Error message:', error.message);
-                console.error('Stack trace:', error.stack);
-            } else {
-                console.error('Unknown error type:', error);
+                console.log('Capture sent to plugin');
+            } catch (error) {
+                console.error('Error in capture process:', error);
+                if (error instanceof Error) {
+                    console.error('Error name:', error.name);
+                    console.error('Error message:', error.message);
+                    console.error('Stack trace:', error.stack);
+                } else {
+                    console.error('Unknown error type:', error);
+                }
             }
-        }
+        });
     }
 </script>
 
@@ -103,11 +98,6 @@
         </div>
     </div>
 </div>
-
-<Button
-    on:click={captureView}
-    title="Capture View"
-/>
 
 <style>
     .viewport {

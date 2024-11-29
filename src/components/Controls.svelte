@@ -7,6 +7,7 @@
         type RingUnit
     } from 'svelte-tweakpane-ui';
     import { rotation } from '../stores/rotation';
+    import { capture } from '../stores/capture';
 
     let value: RotationEulerValueObject = {
         x: 0,
@@ -15,31 +16,39 @@
     };
 
     let zoom = 1;
-    let fov = 75;  // Initial FOV
+    let fov = 75;
 
-    // Zoom configuration
     let zoomUnitConfig: RingUnit = {
         value: 0.1,
         pixels: 40,
         ticks: 5
     };
 
-    // FOV configuration
     let fovUnitConfig: RingUnit = {
-        value: 5,  // Step size of 5 degrees
+        value: 5,
         pixels: 40,
         ticks: 5
     };
 
-    // Update store when values change
-    $: $rotation = {
+    $: rotation.update(r => ({
+        ...r,
         ...value,
         zoom,
         fov
-    };
+    }));
+
+    function handleReset() {
+        value = {
+            x: 0,
+            y: 0,
+            z: 0
+        };
+        zoom = 1;
+        fov = 75;
+    }
 </script>
 
-<div class="flex flex-col">
+<div class="flex flex-col ">
     <RotationEuler
         bind:value
         expanded={true}
@@ -69,16 +78,23 @@
         wide={true}
     />
 
-    <Button
-        on:click={() => {
-            value = {
-                x: 0,
-                y: 0,
-                z: 0
-            };
-            zoom = 1;
-            fov = 75;
-        }}
-        title="Reset"
-    />
+    <div class="flex flex-col gap-2">
+        <Button
+            on:click={handleReset}
+            title="Reset"
+        />
+        <Button
+            on:click={() => $capture.captureView()}
+            title="Capture View"
+        />
+    </div>
 </div>
+
+<style>
+    .gap-4 {
+        gap: 1rem;
+    }
+    .gap-2 {
+        gap: 0.5rem;
+    }
+</style>
