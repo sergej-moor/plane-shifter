@@ -49,7 +49,7 @@ penpot.ui.onMessage(async (message: PluginMessageEvent) => {
           {
             fillOpacity: 1,
             fillImage: image,
-            fillType: "image",
+            //fillType: "image",
           },
         ];
         console.log("Image set as fill for rectangle");
@@ -72,6 +72,43 @@ penpot.ui.onMessage(async (message: PluginMessageEvent) => {
     } finally {
       penpot.history.undoBlockFinish(blockId);
       console.log("Undo block finished");
+    }
+  } else if (message.type === "load-selection") {
+    console.log("Processing load-selection request...");
+
+    try {
+      const selection = penpot.selection[0]; // Get first selection only
+
+      if (!selection) {
+        console.warn("No element selected");
+        return;
+      }
+
+      console.log("Exporting selected element:", selection.name);
+
+      const imageData = await selection.export({
+        type: "png",
+        scale: 4, // High quality export
+      });
+
+      console.log("Element exported successfully");
+
+      // Send the exported image back to the UI
+      sendMessage({
+        type: "selection-loaded",
+        imageData: Array.from(imageData),
+        width: selection.width,
+        height: selection.height,
+      });
+    } catch (error) {
+      console.error("Error loading selection:", error);
+      if (error instanceof Error) {
+        console.error("Error details:", {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        });
+      }
     }
   } else {
     console.warn("Received message with unknown type or missing imageData");

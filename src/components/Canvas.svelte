@@ -5,6 +5,7 @@
     import type { PluginMessageEvent } from '../types';
     import domtoimage from 'dom-to-image';
 
+    export let loadedImage: string | null = null;
     let billboardElement: HTMLDivElement;
 
     $: perspective = `perspective(${1000 / Math.tan(($rotation.fov * Math.PI) / 360)}px)`;
@@ -94,7 +95,15 @@
             class="billboard" 
             style:transform
         >
-            <pre>{valueRows}</pre>
+            {#if loadedImage}
+                <img 
+                    src={loadedImage} 
+                    alt="Loaded selection"
+                    style="width: 100%; height: 100%; object-fit: contain;"
+                />
+            {:else}
+                <pre>{valueRows}</pre>
+            {/if}
         </div>
     </div>
 </div>
@@ -126,5 +135,10 @@
         background: linear-gradient(45deg, magenta, orange);
         transform-origin: center;
         position: absolute; 
+    }
+
+    .billboard img {
+        max-width: 100%;
+        max-height: 100%;
     }
 </style>

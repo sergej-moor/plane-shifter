@@ -6,5 +6,12 @@ export type PluginMessageEvent =
       width: number;
       height: number;
     }
-  | { type: "selection-update"; name: string | null };
+  | { type: "selection-update"; name: string | null }
+  | { type: "load-selection" }
+  | {
+      type: "selection-loaded";
+      imageData: number[];
+      width: number;
+      height: number;
+    };
 // Add more message types here

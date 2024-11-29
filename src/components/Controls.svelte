@@ -50,9 +50,7 @@
 
     function handleLoadSelection() {
         window.parent.postMessage({
-            pluginMessage: {
-                type: "load-selection"
-            }
+            type: "load-selection"
         }, '*');
     }
 </script>
