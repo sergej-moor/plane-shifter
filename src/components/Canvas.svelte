@@ -4,7 +4,8 @@
     import { Utils } from 'svelte-tweakpane-ui';
     import type { PluginMessageEvent } from '../types';
     import domtoimage from 'dom-to-image';
-
+    import { selection } from '../stores/selection';
+  import { LucideLoader } from 'lucide-svelte';
     export let loadedImage: string | null = null;
     export let imageWidth: number | null = null;
     export let imageHeight: number | null = null;
@@ -97,7 +98,13 @@
             class="billboard" 
             style:transform
         >
-            {#if loadedImage}
+            {#if $selection.isLoading}
+           
+                <div class="loading-spinner">
+                 
+                    <LucideLoader class="animate-[spin_2s_ease-in-out_infinite]" />
+                </div>
+            {:else if loadedImage}
                 <img 
                     src={loadedImage} 
                     alt="Loaded selection"
@@ -174,5 +181,28 @@
         .billboard img {
             image-rendering: -moz-crisp-edges;
         }
+    }
+
+    .loading-spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        background: var(--panel-background);
+    }
+
+/*     .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--text-disabled);
+        border-top: 4px solid var(--text-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    } */
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 </style>
