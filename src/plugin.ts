@@ -88,7 +88,7 @@ penpot.ui.onMessage(async (message: PluginMessageEvent) => {
 
       const imageData = await selection.export({
         type: "png",
-        scale: 4, // High quality export
+        scale: 4, // Match preview size
       });
 
       console.log("Element exported successfully");

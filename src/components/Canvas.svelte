@@ -19,11 +19,34 @@
         .map(([key, v]) => `${key}: ${v >= 0 ? '+' : ''}${v.toFixed(6)}`)
         .join('\n');
 
-    // Update store with dimensions based on loaded image or default size
+    // Update store with dimensions and calculate scale to fit viewport in container
     $: if (billboardElement) {
-        const width = imageWidth || 400;
-        const height = imageHeight || 400;
+        // Calculate initial dimensions to fill container
+        const containerSize = 400;
+        const padding = 32; // 16px padding on each side
+        const availableSpace = containerSize - padding;
         
+        let width, height;
+        
+        if (imageWidth && imageHeight) {
+            // Calculate which dimension to fit to
+            const aspectRatio = imageWidth / imageHeight;
+            
+            if (aspectRatio > 1) {
+                // Image is wider than tall - fit to width
+                width = availableSpace;
+                height = width / aspectRatio;
+            } else {
+                // Image is taller than wide - fit to height
+                height = availableSpace;
+                width = height * aspectRatio;
+            }
+        } else {
+            width = availableSpace;
+            height = availableSpace;
+        }
+        
+        // Update dimensions in rotation store
         if (width !== $rotation.width || height !== $rotation.height) {
             console.log('Updating dimensions:', { width, height });
             rotation.update(r => ({
@@ -31,6 +54,18 @@
                 width,
                 height
             }));
+        }
+
+        // Calculate and apply scale for container fit
+        const scale = Math.min(
+            availableSpace / width,
+            availableSpace / height
+        );
+        
+        // Apply scale to viewport
+        const viewport = billboardElement.closest('.viewport') as HTMLElement;
+        if (viewport) {
+            viewport.style.setProperty('--viewport-scale', scale.toString());
         }
     }
 
@@ -40,25 +75,36 @@
             console.log('Starting capture process...');
             
             try {
-                const rect = billboardElement.getBoundingClientRect();
-                const actualWidth = Math.round(rect.width);
-                const actualHeight = Math.round(rect.height);
+                // Use 4x size for high-resolution capture
+                const scale = 4;
+                const captureWidth = 400 * scale;
+                const captureHeight = 400 * scale;
+                
+                // Get the viewport element
+                const viewport = billboardElement.closest('.viewport') as HTMLElement;
+                const viewportScale = viewport?.style.getPropertyValue('--viewport-scale') || '1';
 
                 console.log('Converting DOM to image with dimensions:', {
-                    width: actualWidth,
-                    height: actualHeight
+                    width: captureWidth,
+                    height: captureHeight,
+                    viewportScale,
+                    transform
                 });
 
+                // Scale up the transform for high-res capture
+                const highResTransform = perspective + ' ' + 
+                    Utils.eulerToCssTransform($rotation) + 
+                    ` scale(${$rotation.zoom * scale})`;
+
                 const blob = await domtoimage.toBlob(billboardElement, {
-                    width: actualWidth,
-                    height: actualHeight,
+                    width: captureWidth,
+                    height: captureHeight,
                     style: {
-                        transform,
+                        transform: highResTransform,
                         'transform-origin': 'center',
-                        width: `${actualWidth}px`,
-                        height: `${actualHeight}px`
+                        width: `${captureWidth}px`,
+                        height: `${captureHeight}px`,
                     },
-                    bgcolor: null,
                 });
                 
                 console.log('Blob created, size:', blob.size);
@@ -67,73 +113,83 @@
                 const imageData = new Uint8Array(arrayBuffer);
                 console.log('Final image data size:', imageData.length);
                 
+                // Send the high-resolution dimensions
                 window.parent.postMessage({
-                   
-                        type: 'add-capture',
-                        imageData,
-                        width: $rotation.width,
-                        height: $rotation.height
-                    
-                }  satisfies PluginMessageEvent, '*');
+                    type: 'add-capture',
+                    imageData,
+                    width: captureWidth,
+                    height: captureHeight
+                } satisfies PluginMessageEvent, '*');
 
                 console.log('Capture sent to plugin');
             } catch (error) {
                 console.error('Error in capture process:', error);
                 if (error instanceof Error) {
-                    console.error('Error name:', error.name);
-                    console.error('Error message:', error.message);
-                    console.error('Stack trace:', error.stack);
-                } else {
-                    console.error('Unknown error type:', error);
+                    console.error('Error details:', {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    });
                 }
             }
         });
     }
 </script>
 
-<div class="viewport" style:width="{imageWidth || 400}px" style:height="{imageHeight || 400}px">
-    <div class="scene">
-        <div 
-            bind:this={billboardElement} 
-            class="billboard" 
-            style:transform
-        >
-            {#if $selection.isLoading}
-           
-                <div class="loading-spinner">
-                 
-                    <LucideLoader class="animate-[spin_2s_ease-in-out_infinite]" />
-                </div>
-            {:else if loadedImage}
-                <img 
-                    src={loadedImage} 
-                    alt="Loaded selection"
-                    style="
-                        width: 100%; 
-                        height: 100%; 
-                        object-fit: contain;
-                        image-rendering: -webkit-optimize-contrast;
-                        image-rendering: crisp-edges;
-                        -ms-interpolation-mode: nearest-neighbor;
-                        backface-visibility: hidden;
-                    "
-                />
-            {:else}
-                <div class="placeholder">
-                    <pre>{valueRows}</pre>
-                </div>
-            {/if}
+<div class="fixed-container">
+    <div class="viewport" style:width="{imageWidth || 400}px" style:height="{imageHeight || 400}px">
+        <div class="scene">
+            <div 
+                bind:this={billboardElement} 
+                class="billboard" 
+                style:transform
+            >
+                {#if $selection.isLoading}
+                    <div class="loading-spinner">
+                        <LucideLoader class="animate-[spin_2s_ease-in-out_infinite]" />
+                    </div>
+                {:else if loadedImage}
+                    <img 
+                        src={loadedImage} 
+                        alt="Loaded selection"
+                        style="
+                            width: 100%; 
+                            height: 100%; 
+                            object-fit: contain;
+                            image-rendering: -webkit-optimize-contrast;
+                            image-rendering: crisp-edges;
+                            -ms-interpolation-mode: nearest-neighbor;
+                            backface-visibility: hidden;
+                            padding: 16px;
+                        "
+                    />
+                {:else}
+                    <div class="placeholder">
+                        <pre>{valueRows}</pre>
+                    </div>
+                {/if}
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    .viewport {
-        overflow: hidden; 
-        position: relative;
+    .fixed-container {
+        width: 400px;
+        height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
         border: 1px solid black;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
+        background: var(--panel-background);
+    }
+
+    .viewport {
+        position: relative;
+        transform-origin: center;
+        /* Scale the viewport to fit within container while preserving aspect ratio */
+        scale: var(--viewport-scale, 1);
     }
 
     .scene {
