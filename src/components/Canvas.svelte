@@ -10,20 +10,34 @@
         .join('\n');
 </script>
 
-<div class="scene">
-    <div class="billboard" style:transform>
-        <pre>{valueRows}</pre>
+<div class="viewport">
+    <div class="scene">
+        <div class="billboard" style:transform>
+            <pre>{valueRows}</pre>
+        </div>
     </div>
 </div>
 
 <style>
-    div.scene {
-        perspective-origin: center;
-        width: 100%;
-        aspect-ratio: 1;
+    .viewport {
+   
+        width: 400px;
+        height: 400px;
+        overflow: hidden; 
+        position: relative;
+        border: 1px solid black;
     }
 
-    div.billboard {
+    .scene {
+        perspective-origin: center;
+        width: 100%;
+        height: 100%;
+        position: absolute; 
+        left: 0;
+        top: 0;
+    }
+
+    .billboard {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -31,5 +45,6 @@
         height: 100%;
         background: linear-gradient(45deg, magenta, orange);
         transform-origin: center;
+        position: absolute; 
     }
 </style>
