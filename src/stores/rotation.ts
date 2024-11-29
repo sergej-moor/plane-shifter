@@ -6,6 +6,8 @@ export type RotationValues = {
   z: number;
   zoom: number;
   fov: number;
+  width: number;
+  height: number;
 };
 
 export const rotation = writable<RotationValues>({
@@ -14,4 +16,6 @@ export const rotation = writable<RotationValues>({
   z: 0,
   zoom: 1,
   fov: 75,
+  width: 400,
+  height: 400,
 });

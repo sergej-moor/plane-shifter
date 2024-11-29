@@ -12,6 +12,7 @@
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "@tsconfig/svelte": "^5.0.4",
+    "@types/dom-to-image": "^2.6.7",
     "autoprefixer": "^10.4.20",
     "concurrently": "^8.2.2",
     "postcss": "^8.4.49",
@@ -26,6 +27,7 @@
     "@penpot/plugin-styles": "^1.0.0",
     "@penpot/plugin-types": "^1.0.0",
     "@types/node": "^22.9.1",
+    "dom-to-image": "^2.6.0",
     "svelte-tweakpane-ui": "^1.5.0"
   }
 }

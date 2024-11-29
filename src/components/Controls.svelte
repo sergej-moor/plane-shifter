@@ -38,46 +38,47 @@
         fov
     };
 </script>
+
 <div class="flex flex-col">
-<RotationEuler
-    bind:value
-    expanded={true}
-    label="3D Transform"
-    picker={'inline'}
-/>
+    <RotationEuler
+        bind:value
+        expanded={true}
+        label="3D Transform"
+        picker={'inline'}
+    />
 
-<Ring
-    bind:value={zoom}
-    label="Zoom"
-    format={(v) => `${v.toFixed(2)}x`}
-    min={0.1}
-    max={3}
-    pointerScale={-2.5}
-    unit={zoomUnitConfig}
-    wide={true}
-/>
+    <Ring
+        bind:value={zoom}
+        label="Zoom"
+        format={(v) => `${v.toFixed(2)}x`}
+        min={0.1}
+        max={3}
+        pointerScale={-2.5}
+        unit={zoomUnitConfig}
+        wide={true}
+    />
 
-<Ring
-    bind:value={fov}
-    label="FOV"
-    format={(v) => `${v.toFixed(0)}°`}
-    min={45}
-    max={120}
-    pointerScale={-2.5}
-    unit={fovUnitConfig}
-    wide={true}
-/>
+    <Ring
+        bind:value={fov}
+        label="FOV"
+        format={(v) => `${v.toFixed(0)}°`}
+        min={45}
+        max={120}
+        pointerScale={-2.5}
+        unit={fovUnitConfig}
+        wide={true}
+    />
 
-<Button
-on:click={() => {
-    value = {
-        x: 0,
-        y: 0,
-        z: 0
-    };
-    zoom = 1;
-    fov = 75;
-}}
-title="Reset"
-/>
+    <Button
+        on:click={() => {
+            value = {
+                x: 0,
+                y: 0,
+                z: 0
+            };
+            zoom = 1;
+            fov = 75;
+        }}
+        title="Reset"
+    />
 </div>
