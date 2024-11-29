@@ -8,6 +8,7 @@
     } from 'svelte-tweakpane-ui';
     import { rotation } from '../stores/rotation';
     import { capture } from '../stores/capture';
+    import { selection } from '../stores/selection';
 
     let value: RotationEulerValueObject = {
         x: 0,
@@ -46,9 +47,25 @@
         zoom = 1;
         fov = 75;
     }
+
+    function handleLoadSelection() {
+        window.parent.postMessage({
+            pluginMessage: {
+                type: "load-selection"
+            }
+        }, '*');
+    }
 </script>
 
-<div class="flex flex-col ">
+<div class="flex flex-col gap-4">
+    <div class="selection-info">
+        {#if $selection.selectedName}
+            <span class="selected">Selected: {$selection.selectedName}</span>
+        {:else}
+            <span class="none-selected">No element selected</span>
+        {/if}
+    </div>
+
     <RotationEuler
         bind:value
         expanded={true}
@@ -78,7 +95,7 @@
         wide={true}
     />
 
-    <div class="flex flex-col gap-2">
+    <div class="flex gap-2">
         <Button
             on:click={handleReset}
             title="Reset"
@@ -86,6 +103,10 @@
         <Button
             on:click={() => $capture.captureView()}
             title="Capture View"
+        />
+        <Button
+            on:click={handleLoadSelection}
+            title="Load Selection"
         />
     </div>
 </div>
@@ -96,5 +117,17 @@
     }
     .gap-2 {
         gap: 0.5rem;
+    }
+    .selection-info {
+        padding: 8px;
+        border-radius: 4px;
+        background: var(--panel-background);
+        font-size: 0.9em;
+    }
+    .none-selected {
+        color: var(--text-disabled);
+    }
+    .selected {
+        color: var(--text-primary);
     }
 </style>

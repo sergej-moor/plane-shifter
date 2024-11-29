@@ -2,10 +2,16 @@
   import Canvas from './components/Canvas.svelte';
   import Controls from './components/Controls.svelte';
   import { theme, updateTheme } from './stores/theme';
+  import { selection } from './stores/selection';
   
   const handleMessage = (event: MessageEvent) => {
     if (event.data.type === 'theme') {
       updateTheme(event.data.content);
+    } else if (event.data.type === 'selection-update') {
+      selection.update(s => ({
+        ...s,
+        selectedName: event.data.name
+      }));
     }
   }
 </script>

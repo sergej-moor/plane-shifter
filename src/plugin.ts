@@ -84,6 +84,22 @@ penpot.on("themechange", (theme: string) => {
   sendMessage({ type: "theme", content: theme });
 });
 
+// Add this at the top with other event handlers
+penpot.on("selectionchange", () => {
+  const selection = penpot.selection;
+  let name = null;
+
+  if (selection.length === 1) {
+    const element = selection[0];
+    name = element.name || "Unnamed element";
+  }
+
+  sendMessage({
+    type: "selection-update",
+    name,
+  });
+});
+
 function sendMessage(message: PluginMessageEvent) {
   console.log("Sending message to UI:", message);
   penpot.ui.sendMessage(message);
