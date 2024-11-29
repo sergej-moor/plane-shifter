@@ -6,6 +6,8 @@
   import { rotation } from './stores/rotation';
   
   let loadedImage: string | null = null;
+  let imageWidth: number | null = null;
+  let imageHeight: number | null = null;
   
   const handleMessage = (event: MessageEvent) => {
     const message = event.data;
@@ -19,7 +21,6 @@
         selectedName: message.name
       }));
     } else if (message.type === 'selection-loaded') {
-      console.log("hallo")
       const { imageData, width, height } = message;
       
       // Convert array back to Uint8Array
@@ -28,13 +29,8 @@
       // Create blob and object URL
       const blob = new Blob([uint8Array], { type: 'image/png' });
       loadedImage = URL.createObjectURL(blob);
-      console.log(loadedImage)
-      // Update rotation store with new dimensions
-      rotation.update(r => ({
-        ...r,
-        width,
-        height
-      }));
+      imageWidth = width;
+      imageHeight = height;
     }
   }
 </script>
@@ -45,7 +41,7 @@
   <h1>Plugin Template</h1>
   <div class="flex">
     <Controls></Controls>
-    <Canvas {loadedImage} />
+    <Canvas {loadedImage} {imageWidth} {imageHeight} />
   </div>
 </main>
 

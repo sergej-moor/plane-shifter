@@ -6,6 +6,9 @@
     import domtoimage from 'dom-to-image';
 
     export let loadedImage: string | null = null;
+    export let imageWidth: number | null = null;
+    export let imageHeight: number | null = null;
+    
     let billboardElement: HTMLDivElement;
 
     $: perspective = `perspective(${1000 / Math.tan(($rotation.fov * Math.PI) / 360)}px)`;
@@ -15,18 +18,17 @@
         .map(([key, v]) => `${key}: ${v >= 0 ? '+' : ''}${v.toFixed(6)}`)
         .join('\n');
 
-    // Update store with actual element dimensions
+    // Update store with dimensions based on loaded image or default size
     $: if (billboardElement) {
-        const rect = billboardElement.getBoundingClientRect();
-        const actualWidth = Math.round(rect.width);
-        const actualHeight = Math.round(rect.height);
+        const width = imageWidth || 400;
+        const height = imageHeight || 400;
         
-        if (actualWidth !== $rotation.width || actualHeight !== $rotation.height) {
-            console.log('Updating dimensions:', { width: actualWidth, height: actualHeight });
+        if (width !== $rotation.width || height !== $rotation.height) {
+            console.log('Updating dimensions:', { width, height });
             rotation.update(r => ({
                 ...r,
-                width: actualWidth,
-                height: actualHeight
+                width,
+                height
             }));
         }
     }
@@ -88,7 +90,7 @@
     }
 </script>
 
-<div class="viewport">
+<div class="viewport" style:width="{imageWidth || 400}px" style:height="{imageHeight || 400}px">
     <div class="scene">
         <div 
             bind:this={billboardElement} 
@@ -99,10 +101,20 @@
                 <img 
                     src={loadedImage} 
                     alt="Loaded selection"
-                    style="width: 100%; height: 100%; object-fit: contain;"
+                    style="
+                        width: 100%; 
+                        height: 100%; 
+                        object-fit: contain;
+                        image-rendering: -webkit-optimize-contrast;
+                        image-rendering: crisp-edges;
+                        -ms-interpolation-mode: nearest-neighbor;
+                        backface-visibility: hidden;
+                    "
                 />
             {:else}
-                <pre>{valueRows}</pre>
+                <div class="placeholder">
+                    <pre>{valueRows}</pre>
+                </div>
             {/if}
         </div>
     </div>
@@ -110,11 +122,11 @@
 
 <style>
     .viewport {
-        width: 400px;
-        height: 400px;
         overflow: hidden; 
         position: relative;
         border: 1px solid black;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
 
     .scene {
@@ -124,6 +136,8 @@
         position: absolute; 
         left: 0;
         top: 0;
+        transform-style: preserve-3d;
+        backface-visibility: hidden;
     }
 
     .billboard {
@@ -132,13 +146,33 @@
         justify-content: center;
         width: 100%;
         height: 100%;
-        background: linear-gradient(45deg, magenta, orange);
         transform-origin: center;
-        position: absolute; 
+        position: absolute;
+        transform-style: preserve-3d;
+        backface-visibility: hidden;
+    }
+
+    .placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        background: var(--panel-background);
     }
 
     .billboard img {
         max-width: 100%;
         max-height: 100%;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+        -ms-interpolation-mode: nearest-neighbor;
+        backface-visibility: hidden;
+    }
+
+    @-moz-document url-prefix() {
+        .billboard img {
+            image-rendering: -moz-crisp-edges;
+        }
     }
 </style>
