@@ -11,6 +11,7 @@
     export let imageHeight: number | null = null;
     
     let billboardElement: HTMLDivElement;
+    let exportCanvas: HTMLDivElement;
 
     $: perspective = `perspective(${1000 / Math.tan(($rotation.fov * Math.PI) / 360)}px)`;
     $: transform = perspective + ' ' + Utils.eulerToCssTransform($rotation) + ` scale(${$rotation.zoom})`;
@@ -70,48 +71,52 @@
     }
 
     // Register capture function
-    $: if (billboardElement) {
+    $: if (billboardElement && loadedImage) {
         capture.registerCapture(async () => {
             console.log('Starting capture process...');
             
             try {
-                // Use 4x size for high-resolution capture
-                const scale = 4;
-                const captureWidth = 400 * scale;
-                const captureHeight = 400 * scale;
-                
-                // Get the viewport element
-                const viewport = billboardElement.closest('.viewport') as HTMLElement;
-                const viewportScale = viewport?.style.getPropertyValue('--viewport-scale') || '1';
+                // Create temporary image element (not added to DOM)
+                const img = document.createElement('img');
+                img.src = loadedImage;
+                img.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    transform: ${transform};
+                    transform-origin: center;
+                    backface-visibility: hidden;
+                `;
 
-                console.log('Converting DOM to image with dimensions:', {
+                // Use original dimensions for capture
+                const captureWidth = imageWidth! * 1;  // 4x scale for high res
+                const captureHeight = imageHeight! * 1;
+
+                console.log('Converting image to blob with dimensions:', {
                     width: captureWidth,
                     height: captureHeight,
-                    viewportScale,
                     transform
                 });
 
-                // Scale up the transform for high-res capture
-                const highResTransform = perspective + ' ' + 
-                    Utils.eulerToCssTransform($rotation) + 
-                    ` scale(${$rotation.zoom * scale})`;
+                // Create a temporary container for the image
+                const container = document.createElement('div');
+                container.style.cssText = `
+                    width: ${captureWidth}px;
+                    height: ${captureHeight}px;
+                    transform-style: preserve-3d;
+                    perspective: ${perspective};
+                `;
+                container.appendChild(img);
 
-                const blob = await domtoimage.toBlob(billboardElement, {
+                const blob = await domtoimage.toBlob(container, {
                     width: captureWidth,
                     height: captureHeight,
-                    style: {
-                        transform: highResTransform,
-                        'transform-origin': 'center',
-                        width: `${captureWidth}px`,
-                        height: `${captureHeight}px`,
-                    },
                 });
                 
                 console.log('Blob created, size:', blob.size);
 
                 const arrayBuffer = await blob.arrayBuffer();
                 const imageData = new Uint8Array(arrayBuffer);
-                console.log('Final image data size:', imageData.length);
                 
                 // Send the high-resolution dimensions
                 window.parent.postMessage({
@@ -171,6 +176,8 @@
             </div>
         </div>
     </div>
+    
+
 </div>
 
 <style>
@@ -260,5 +267,16 @@
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
+    }
+
+    .export-canvas {
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        perspective-origin: center;
+        perspective: inherit;
     }
 </style>
