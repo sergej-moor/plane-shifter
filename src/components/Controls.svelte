@@ -49,6 +49,9 @@
     }
 
     function handleLoadSelection() {
+        // Set loading state before requesting selection
+        selection.update(s => ({ ...s, isLoading: true }));
+        
         window.parent.postMessage({
             type: "load-selection"
         }, '*');
@@ -57,7 +60,9 @@
 
 <div class="flex flex-col gap-4">
     <div class="selection-info">
-        {#if $selection.selectedName}
+        {#if $selection.isLoading}
+            <span class="loading">Loading selection...</span>
+        {:else if $selection.selectedName}
             <span class="selected">Selected: {$selection.selectedName}</span>
         {:else}
             <span class="none-selected">No element selected</span>
@@ -127,5 +132,9 @@
     }
     .selected {
         color: var(--text-primary);
+    }
+    .loading {
+        color: var(--text-secondary);
+        font-style: italic;
     }
 </style>

@@ -31,6 +31,9 @@
       loadedImage = URL.createObjectURL(blob);
       imageWidth = width;
       imageHeight = height;
+
+      // Clear loading state after image is loaded
+      selection.update(s => ({ ...s, isLoading: false }));
     }
   }
 </script>

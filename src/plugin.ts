@@ -100,7 +100,18 @@ penpot.ui.onMessage(async (message: PluginMessageEvent) => {
         width: selection.width,
         height: selection.height,
       });
+
+      // After successful load, set loading to false
+      sendMessage({
+        type: "selection-loading",
+        isLoading: false,
+      });
     } catch (error) {
+      // In case of error, also set loading to false
+      sendMessage({
+        type: "selection-loading",
+        isLoading: false,
+      });
       console.error("Error loading selection:", error);
       if (error instanceof Error) {
         console.error("Error details:", {
