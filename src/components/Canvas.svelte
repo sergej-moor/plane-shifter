@@ -77,8 +77,8 @@
             
             try {
                 // Get original dimensions
-                const originalWidth = imageWidth!;
-                const originalHeight = imageHeight!;
+                const originalWidth = imageWidth! *2;
+                const originalHeight = imageHeight! *2;
 
                 console.log('Converting image with dimensions:', {
                     originalWidth,
@@ -91,8 +91,8 @@
                 const img = document.createElement('img');
                 img.src = loadedImage;
                 img.style.cssText = `
-                    width: ${originalWidth / 2}px;
-                    height: ${originalHeight / 2}px;
+                    width: ${originalWidth }px;
+                    height: ${originalHeight}px;
                     transform: ${transform} scale(0.5);
                     transform-origin: center;
                     backface-visibility: hidden;
