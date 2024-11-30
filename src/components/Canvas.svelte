@@ -87,20 +87,9 @@
                     zoom: $rotation.zoom
                 });
 
-                // Create temporary image element (not added to DOM)
-                const img = document.createElement('img');
-                img.src = loadedImage;
-                img.style.cssText = `
-                    width: ${originalWidth}px;
-                    height: ${originalHeight}px;
-                    transform: ${transform};
-                    transform-origin: center;
-                    backface-visibility: hidden;
-                `;
-
-                const blob = await domtoimage.toBlob(img, {
-                    width: originalWidth,
-                    height: originalHeight,
+                // Convert canvas to blob
+                const blob = await new Promise<Blob>((resolve) => {
+                    canvas.toBlob((b) => resolve(b!), 'image/png');
                 });
                 
                 console.log('Blob created, size:', blob.size);
