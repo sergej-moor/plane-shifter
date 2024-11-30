@@ -72,35 +72,73 @@
 
     // Register capture function
     $: if (billboardElement && loadedImage) {
-        capture.registerCapture(async () => {
+        const captureImage = async () => {
             console.log('Starting capture process...');
             
             try {
-                // Get original dimensions
-                const originalWidth = imageWidth!;
-                const originalHeight = imageHeight!;
+                // Create temporary canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d')!;
+                
+                // Set initial canvas size to original image dimensions
+                canvas.width = imageWidth!;
+                canvas.height = imageHeight!;
 
-                console.log('Converting image with dimensions:', {
-                    originalWidth,
-                    originalHeight,
-                    transform,
+                // Create temporary image element to load the source
+                const img = new Image();
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    img.src = loadedImage!;
+                });
+
+                // Calculate the 2D projection of our 3D transform
+                const projection = calculateProjectionMatrix(
+                    $rotation.fov,
+                    $rotation.x,
+                    $rotation.y,
+                    $rotation.z,
+                    $rotation.zoom * 0.5 // Include the 0.5 scale
+                );
+
+                // Clear canvas and set transform
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Apply transforms
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                
+                // Apply the calculated transformation matrix
+                ctx.transform(
+                    projection.a, projection.b,
+                    projection.c, projection.d,
+                    0, 0
+                );
+                
+                // Apply perspective scaling
+                ctx.scale(projection.scaleX, projection.scaleY);
+                
+                // Draw image centered
+                ctx.drawImage(
+                    img,
+                    -imageWidth! / 2,
+                    -imageHeight! / 2,
+                    imageWidth!,
+                    imageHeight!
+                );
+                
+                ctx.restore();
+
+                console.log('Applied transforms:', {
+                    rotateX: $rotation.x,
+                    rotateY: $rotation.y,
+                    rotateZ: $rotation.z,
                     zoom: $rotation.zoom
                 });
 
-                // Create temporary image element (not added to DOM)
-                const img = document.createElement('img');
-                img.src = loadedImage;
-                img.style.cssText = `
-                    width: ${originalWidth}px;
-                    height: ${originalHeight}px;
-                    transform: ${transform};
-                    transform-origin: center;
-                    backface-visibility: hidden;
-                `;
-
-                const blob = await domtoimage.toBlob(img, {
-                    width: originalWidth,
-                    height: originalHeight,
+                // Convert canvas to blob
+                const blob = await new Promise<Blob>((resolve) => {
+                    canvas.toBlob((b) => resolve(b!), 'image/png');
                 });
                 
                 console.log('Blob created, size:', blob.size);
@@ -108,12 +146,11 @@
                 const arrayBuffer = await blob.arrayBuffer();
                 const imageData = new Uint8Array(arrayBuffer);
                 
-                // Send original dimensions
                 window.parent.postMessage({
                     type: 'add-capture',
                     imageData,
-                    width: originalWidth,
-                    height: originalHeight
+                    width: canvas.width,
+                    height: canvas.height
                 } satisfies PluginMessageEvent, '*');
 
                 console.log('Capture sent to plugin');
@@ -127,7 +164,34 @@
                     });
                 }
             }
-        });
+        };
+
+        capture.registerCapture(captureImage);
+    }
+
+    // Add these helper functions at the top of the script
+    function calculateProjectionMatrix(fov: number, x: number, y: number, z: number, zoom: number) {
+        // Calculate perspective factor based on FOV (still need to convert FOV to radians)
+        const f = 1 / Math.tan(fov * Math.PI / 360);
+        
+        // Use rotation values directly as they're already in radians
+        const cosX = Math.cos(x);
+        const sinX = Math.sin(x);
+        const cosY = Math.cos(y);
+        const sinY = Math.sin(y);
+        const cosZ = Math.cos(z);
+        const sinZ = Math.sin(z);
+        
+        // Combine rotations and perspective
+        return {
+            a: cosY * cosZ * zoom,
+            b: cosX * sinZ + sinX * sinY * cosZ * zoom,
+            c: -cosY * sinZ * zoom,
+            d: cosX * cosZ - sinX * sinY * sinZ * zoom,
+            // Add perspective scaling
+            scaleX: f * zoom,
+            scaleY: f * zoom
+        };
     }
 </script>
 
