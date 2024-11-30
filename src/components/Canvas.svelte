@@ -76,41 +76,31 @@
             console.log('Starting capture process...');
             
             try {
+                // Get original dimensions
+                const originalWidth = imageWidth!;
+                const originalHeight = imageHeight!;
+
+                console.log('Converting image with dimensions:', {
+                    originalWidth,
+                    originalHeight,
+                    transform,
+                    zoom: $rotation.zoom
+                });
+
                 // Create temporary image element (not added to DOM)
                 const img = document.createElement('img');
                 img.src = loadedImage;
                 img.style.cssText = `
-                    width: 100%;
-                    height: 100%;
-                    object-fit: contain;
+                    width: ${originalWidth}px;
+                    height: ${originalHeight}px;
                     transform: ${transform};
                     transform-origin: center;
                     backface-visibility: hidden;
                 `;
 
-                // Use original dimensions for capture
-                const captureWidth = imageWidth! * 1;  // 4x scale for high res
-                const captureHeight = imageHeight! * 1;
-
-                console.log('Converting image to blob with dimensions:', {
-                    width: captureWidth,
-                    height: captureHeight,
-                    transform
-                });
-
-                // Create a temporary container for the image
-                const container = document.createElement('div');
-                container.style.cssText = `
-                    width: ${captureWidth}px;
-                    height: ${captureHeight}px;
-                    transform-style: preserve-3d;
-                    perspective: ${perspective};
-                `;
-                container.appendChild(img);
-
-                const blob = await domtoimage.toBlob(container, {
-                    width: captureWidth,
-                    height: captureHeight,
+                const blob = await domtoimage.toBlob(img, {
+                    width: originalWidth,
+                    height: originalHeight,
                 });
                 
                 console.log('Blob created, size:', blob.size);
@@ -118,12 +108,12 @@
                 const arrayBuffer = await blob.arrayBuffer();
                 const imageData = new Uint8Array(arrayBuffer);
                 
-                // Send the high-resolution dimensions
+                // Send original dimensions
                 window.parent.postMessage({
                     type: 'add-capture',
                     imageData,
-                    width: captureWidth,
-                    height: captureHeight
+                    width: originalWidth,
+                    height: originalHeight
                 } satisfies PluginMessageEvent, '*');
 
                 console.log('Capture sent to plugin');
